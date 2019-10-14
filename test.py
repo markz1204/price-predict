@@ -158,8 +158,10 @@ df_train_num= df_train[num_attrs]
 #df_train_num.loc['Bath']= df_train_num['BsmtFullBath'] + df_train_num['BsmtHalfBath']
 
 #Remove the above variables, removed 'GarageYrBlt'
-#df_train_num=df_train_num.drop(['Id','3SsnPorch','BsmtFinSF2','BsmtFinSF1','BsmtUnfSF','EnclosedPorch','ScreenPorch','GarageCars',
-#                                'KitchenAbvGr','YearRemodAdd','BsmtFullBath', 'BsmtHalfBath'],axis=1)
+df_train_num.corr()['GarageCars']['GarageArea']
+df_train_num.corr()['YearBuilt']['YearRemodAdd']
+
+df_train_num=df_train_num.drop(['Id','GarageCars'],axis=1)
 
 #Get the correlation matrix
 corr = df_train_num.corr()
@@ -212,13 +214,12 @@ sns.distplot((df_train_num_y-preds),bins=35)
 
 #Load the test data
 df_test=pd.read_csv('test.csv')
-df_test_num= df_test[['OverallQual','YearBuilt', 'YearRemodAdd', '1stFlrSF', 'GrLivArea', 'FullBath','TotRmsAbvGrd', 'GarageCars','GarageArea','Id']]
+df_test_num= df_test[['OverallQual','YearBuilt', 'YearRemodAdd', '1stFlrSF', 'GrLivArea', 'FullBath','TotRmsAbvGrd','GarageArea','Id']]
 
 #IMPORTANT: All the feature engineering & data cleaning steps we have done to the training variables, we have to do the same for the test dataset!!
 #Before we can feed the data into our model, we have to check missing values again. Otherwise the code will give you an error.
 #df_test_num.loc['TotalBsmtSF']=df_test_num['TotalBsmtSF'].fillna(np.mean(df_test_num['TotalBsmtSF']))
 
-df_test_num.loc[df_test_num['GarageCars'].isnull(), 'GarageCars'] = np.mean(df_test_num['GarageCars']).round(2)
 df_test_num.loc[df_test_num['GarageArea'].isnull(), 'GarageArea'] = np.mean(df_test_num['GarageArea']).round(2)
 print(df_test_num.isnull().sum())
 
@@ -227,7 +228,7 @@ print(df_test_num.isnull().sum())
 submit= pd.DataFrame()
 submit['Id'] = df_test_num.Id
 #select features
-preds_out = reg.predict(df_test_num[['OverallQual','YearBuilt', 'YearRemodAdd', '1stFlrSF', 'GrLivArea', 'FullBath','TotRmsAbvGrd', 'GarageCars','GarageArea']])
+preds_out = reg.predict(df_test_num[['OverallQual','YearBuilt', 'YearRemodAdd', '1stFlrSF', 'GrLivArea', 'FullBath','TotRmsAbvGrd','GarageArea']])
 submit['SalePrice'] = preds_out
 #final submission
 submit.to_csv('test_submit.csv', index=False)
