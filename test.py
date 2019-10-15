@@ -17,17 +17,17 @@ print(df_train.columns)
 df_train['SalePrice'].describe()
 
 #histogram
-sns.distplot(df_train['SalePrice'])
+#sns.distplot(df_train['SalePrice'])
 
 #correlation matrix
-corrmat = df_train.corr()
-f, ax = plt.subplots(figsize=(12, 9))
-sns.heatmap(corrmat, vmax=.8, square=True)
+#corrmat = df_train.corr()
+#f, ax = plt.subplots(figsize=(12, 9))
+#sns.heatmap(corrmat, vmax=.8, square=True)
 
 #check if this variable is not relevant to the sale price
-var = 'EnclosedPorch'
-data = pd.concat([df_train['SalePrice'], df_train[var]], axis=1)
-data.plot.scatter(x=var, y='SalePrice', ylim=(0,800000))
+#var = 'EnclosedPorch'
+#data = pd.concat([df_train['SalePrice'], df_train[var]], axis=1)
+#data.plot.scatter(x=var, y='SalePrice', ylim=(0,800000))
 
 #check duplicated rows
 df_train[df_train.duplicated()==True]
@@ -107,7 +107,7 @@ for i, c in zip(range(5,10), col_name):
 """
 
 #Now feature selection part
-print(df_train.info()) #still 76 features remain
+print(df_train.columns) #still 76 features remain
 
 #check distribution of all the inputs
 #df_train.hist(figsize=(20, 20), bins=20)
@@ -163,23 +163,37 @@ df_train_num.corr()['YearBuilt']['YearRemodAdd']
 
 df_train_num=df_train_num.drop(['Id','GarageCars'],axis=1)
 
+""""
 #Get the correlation matrix
 corr = df_train_num.corr()
 corr = corr.applymap(lambda x : 1 if x > 0.5 else -1 if x < -0.5 else 0)
 f, ax = plt.subplots(figsize=(20, 20))
 sns.heatmap(corr, vmax=1, center=0,vmin=-1 ,  square=True, linewidths=.005)
 plt.show()
+"""
 
 #Identify two correlated variables
 #df_train_num=df_train_num.drop(['TotRmsAbvGrd','1stFlrSF'],axis=1)
-
-#list the correlation values
-df_train_num.corr()['SalePrice'].sort_values()
 
 #select correlation >0.5
 df_train_num=df_train_num[df_train_num.columns[df_train_num.corr()['SalePrice']>0.5]]
 #df_train_num.columns
 
+cols = ['OverallQual','YearBuilt', 'YearRemodAdd', '1stFlrSF', 'GrLivArea', 'FullBath','TotRmsAbvGrd','GarageArea']
+
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+
+x = df_train_num[cols].values
+y = df_train_num['SalePrice'].values
+X_train,X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+clf = RandomForestRegressor(n_estimators=400)
+clf.fit(X_train, y_train)
+preds = clf.predict(X_test)
+reg = clf
+
+""""
 #Build the model
 from sklearn import linear_model
 reg = linear_model.LinearRegression()
@@ -211,6 +225,7 @@ plt.scatter(df_train_num_y,preds)
 
 #Check the error
 sns.distplot((df_train_num_y-preds),bins=35)
+"""""
 
 #Load the test data
 df_test=pd.read_csv('test.csv')
@@ -221,21 +236,22 @@ df_test_num= df_test[['OverallQual','YearBuilt', 'YearRemodAdd', '1stFlrSF', 'Gr
 #df_test_num.loc['TotalBsmtSF']=df_test_num['TotalBsmtSF'].fillna(np.mean(df_test_num['TotalBsmtSF']))
 
 df_test_num.loc[df_test_num['GarageArea'].isnull(), 'GarageArea'] = np.mean(df_test_num['GarageArea']).round(2)
-print(df_test_num.isnull().sum())
-
 
 #Predict the results for test dataset
 submit= pd.DataFrame()
 submit['Id'] = df_test_num.Id
 #select features
-preds_out = reg.predict(df_test_num[['OverallQual','YearBuilt', 'YearRemodAdd', '1stFlrSF', 'GrLivArea', 'FullBath','TotRmsAbvGrd','GarageArea']])
+preds_out = reg.predict(df_test_num[cols].values)
+
+preds_out = pd.DataFrame(preds_out).apply(np.exp)
+
 submit['SalePrice'] = preds_out
 #final submission
 submit.to_csv('test_submit.csv', index=False)
 
 #Check output
 #check yearly alignment
-df_train['preds']=preds
+df_train['preds'] = preds_out
 df_yearly=df_train[['SalePrice','preds','YearBuilt']].groupby('YearBuilt').mean()
 sns.lineplot(data=df_yearly)
 
