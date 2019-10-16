@@ -86,28 +86,23 @@ df_train.loc[df_train['HasBsmt']==1,'TotalBsmtSF'] = np.log(df_train['TotalBsmtS
 #plt.scatter(df_train[df_train['TotalBsmtSF']>0]['TotalBsmtSF'], df_train[df_train['TotalBsmtSF']>0]['SalePrice']);
 
 #identify the outliers
-"""fig, axes = plt.subplots(ncols=5, nrows=2, figsize=(16, 4))
+fig, axes = plt.subplots(ncols=5, nrows=2, figsize=(16, 4))
 axes = np.ravel(axes)
-col_name = ['GrLivArea','TotalBsmtSF','1stFlrSF','BsmtFinSF1','LotArea']
-for i, c in zip(range(5), col_name):
-    df_train.plot.scatter(ax=axes[i], x=c, y='SalePrice', sharey=True, colorbar=False, c='r')
+col_name = ['OverallQual','YearBuilt', 'YearRemodAdd', '1stFlrSF', 'GrLivArea', 'FullBath','TotRmsAbvGrd','GarageArea']
+#for i, c in zip(range(8), col_name):
+#    df_train.plot.scatter(ax=axes[i], x=c, y='SalePrice', sharey=True, colorbar=False, c='r')
 
 #delete outliers
 print(df_train.shape)
-df_train = df_train[df_train['GrLivArea'] < 4500]
-df_train = df_train[df_train['LotArea'] < 100000]
-df_train = df_train[df_train['TotalBsmtSF'] < 3000]
+df_train = df_train[df_train['GrLivArea'] < 8]
 df_train = df_train[df_train['1stFlrSF'] < 2500]
-df_train = df_train[df_train['BsmtFinSF1'] < 2000]
+df_train = df_train[df_train['GarageArea'] < 1000]
 
-print(df_train.shape)
-
-for i, c in zip(range(5,10), col_name):
+for i, c in zip(range(8), col_name):
     df_train.plot.scatter(ax=axes[i], x=c, y='SalePrice', sharey=True, colorbar=False, c='b')
-"""
 
 #Now feature selection part
-print(df_train.columns) #still 76 features remain
+print(df_train.shape) #still 76 features remain
 
 #check distribution of all the inputs
 #df_train.hist(figsize=(20, 20), bins=20)
@@ -192,6 +187,18 @@ clf = RandomForestRegressor(n_estimators=400)
 clf.fit(X_train, y_train)
 preds = clf.predict(X_test)
 reg = clf
+
+#Check the training dataset prediction performance
+from sklearn import metrics
+#Mean Absolute Error
+print('MAE:', metrics.mean_absolute_error(y_test, preds))
+#Mean Squared Error
+print('MSE:', metrics.mean_squared_error(y_test, preds))
+#Root Mean Squared Error
+print('RMSE:', np.sqrt(metrics.mean_squared_error(y_test, preds)))
+
+#Plot the predictions and actuals
+#plt.scatter(y_test,preds)
 
 """"
 #Build the model
