@@ -243,14 +243,13 @@ df_test_num= df_test[['OverallQual','YearBuilt', 'YearRemodAdd', '1stFlrSF', 'Gr
 #df_test_num.loc['TotalBsmtSF']=df_test_num['TotalBsmtSF'].fillna(np.mean(df_test_num['TotalBsmtSF']))
 
 df_test_num.loc[df_test_num['GarageArea'].isnull(), 'GarageArea'] = np.mean(df_test_num['GarageArea']).round(2)
+df_test_num.loc[df_test_num['GrLivArea'].notnull(),'GrLivArea']=np.log(df_test_num['GrLivArea'])
 
 #Predict the results for test dataset
 submit= pd.DataFrame()
 submit['Id'] = df_test_num.Id
 #select features
-preds_out = reg.predict(df_test_num[cols].values)
-
-preds_out = pd.DataFrame(preds_out).apply(np.exp)
+preds_out = np.exp(pd.DataFrame(reg.predict(df_test_num[cols].values)))
 
 submit['SalePrice'] = preds_out
 #final submission
